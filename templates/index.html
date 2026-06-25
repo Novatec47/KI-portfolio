@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI Chatbot</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Inter, sans-serif; background: #0d1117; color: #e6edf3; height: 100vh; display: flex; flex-direction: column; }
+        #header { padding: 20px; background: #161b22; border-bottom: 1px solid #30363d; font-size: 18px; font-weight: 700; }
+        #verlauf { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .nachricht { max-width: 70%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+        .user { background: #1f6feb; align-self: flex-end; }
+        .claude { background: #161b22; border: 1px solid #30363d; align-self: flex-start; }
+        .name { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: #7d8590; }
+        #eingabe-bereich { padding: 20px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; }
+        #eingabe { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; color: #e6edf3; font-size: 14px; outline: none; }
+        #senden { background: #1f6feb; border: none; border-radius: 8px; padding: 12px 20px; color: white; font-weight: 700; cursor: pointer; font-size: 14px; }
+        #senden:hover { background: #388bfd; }
+    </style>
+</head>
+<body>
+    <div id="header">KI Chatbot — Powered by Claude</div>
+    <div id="verlauf"></div>
+    <div id="eingabe-bereich">
+        <input id="eingabe" type="text" placeholder="Schreib eine Nachricht..." />
+        <button id="senden">Senden</button>
+    </div>
+
+    <script>
+        const verlauf = document.getElementById("verlauf");
+        const eingabe = document.getElementById("eingabe");
+        const senden = document.getElementById("senden");
+
+        function nachrichtHinzufuegen(text, typ) {
+            const div = document.createElement("div");
+            div.className = `nachricht ${typ}`;
+            div.innerHTML = `<div class="name">${typ === "user" ? "Du" : "Claude"}</div>${typ === "claude" ? marked.parse(text) : text}`;            
+            verlauf.appendChild(div);
+            verlauf.scrollTop = verlauf.scrollHeight;
+        }
+
+        async function nachrichtSenden() {
+            const text = eingabe.value.trim();
+            if (!text) return;
+            
+            nachrichtHinzufuegen(text, "user");
+            eingabe.value = "";
+
+            const antwort = await fetch("/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({nachricht: text})
+            });
+
+            const daten = await antwort.json();
+            nachrichtHinzufuegen(daten.antwort, "claude");
+        }
+
+        senden.addEventListener("click", nachrichtSenden);
+        eingabe.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") nachrichtSenden();
+        });
+    </script>
+</body>

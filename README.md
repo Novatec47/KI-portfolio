@@ -1,1 +1,1 @@
-# KI Portfolio von Collin Schmidt
+# KI Portfolio von Novatec47
